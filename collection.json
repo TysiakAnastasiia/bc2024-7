@@ -1,0 +1,126 @@
+{
+	"info": {
+		"_postman_id": "76f220a9-92b5-4d0b-b31c-584831364922",
+		"name": "Lab7",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "44714236",
+		"_collection_link": "https://anastasiia-4491203.postman.co/workspace/Anastasiia's-Workspace~d5e98ba7-2b62-4dd2-847e-59e1e614746f/collection/44714236-76f220a9-92b5-4d0b-b31c-584831364922?action=share&source=collection_link&creator=44714236"
+	},
+	"item": [
+		{
+			"name": "Device1",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"device_name\": \"Device1\",\r\n    \"serial_number\": \"12345\"\r\n}\r\n",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:8080/register?device_name=Device1&serial_number=12345",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"register"
+					],
+					"query": [
+						{
+							"key": "device_name",
+							"value": "Device1"
+						},
+						{
+							"key": "serial_number",
+							"value": "12345"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "All devices",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:8080/devices",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"devices"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Take device1",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"user_name\": \"User1\",\r\n    \"serial_number\": \"12345\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:8080/take?user_name=User1&serial_number=12345",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"take"
+					],
+					"query": [
+						{
+							"key": "user_name",
+							"value": "User1"
+						},
+						{
+							"key": "serial_number",
+							"value": "12345"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Get info device 1",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:8080/devices/12345",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"devices",
+						"12345"
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}
