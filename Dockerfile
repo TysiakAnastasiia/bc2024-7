@@ -1,8 +1,8 @@
-FROM node:16
-WORKDIR /usr/src/app
+FROM node:20
+WORKDIR /app
 COPY package*.json ./
 RUN npm install
+RUN npm install -g nodemon
 COPY . .
-RUN npm install --save-dev nodemon
-EXPOSE 3000
-CMD ["npx", "nodemon", "index.js"]
+EXPOSE 8080
+CMD ["npm", "run", "start"]

@@ -1,59 +1,124 @@
 const express = require('express');
+const Sequelize = require('sequelize');
+const dotenv = require('dotenv');
+dotenv.config();  // Зчитуємо змінні з .env файлу
+
+// Ініціалізація сервера
 const app = express();
 app.use(express.json());  // для парсингу JSON в тілі запиту
 
-let devices = [];  // масив для зберігання пристроїв
-
-// POST /register - реєстрація пристрою
-app.post('/register', (req, res) => {
-    console.log(req.body);
-    const { device_name, serial_number } = req.body;
-    
-    // Перевірка, чи вже є такий пристрій
-    if (devices.find(device => device.serial_number === serial_number)) {
-        return res.status(400).json({ message: 'Device already exists' });
-    }
-
-    // Додавання нового пристрою
-    devices.push({ device_name, serial_number, user_name: null });
-    res.status(200).json({ message: 'Device registered successfully' });
+// Налаштування підключення до PostgreSQL через Sequelize
+const sequelize = new Sequelize(process.env.DB_NAME, process.env.DB_USER, process.env.DB_PASSWORD, {
+    host: process.env.DB_HOST,
+    dialect: 'postgres',
+    logging: false,  // вимкнемо логування SQL запитів
 });
 
-// GET /devices - повернення списку всіх пристроїв
-app.get('/devices', (req, res) => {
-    res.json(devices);
+// Модель для пристроїв
+const Device = sequelize.define('Device', {
+    device_name: {
+        type: Sequelize.STRING,
+        allowNull: false,
+    },
+    serial_number: {
+        type: Sequelize.STRING,
+        unique: true,
+        allowNull: false,
+    },
+    user_name: {
+        type: Sequelize.STRING,
+        allowNull: true,
+    },
+});
+
+// Підключення до БД
+sequelize.sync()
+    .then(() => console.log("Connected to database"))
+    .catch(err => console.error('Unable to connect to the database:', err));
+
+// POST /register - реєстрація пристрою
+app.post('/register', async (req, res) => {
+    const { device_name, serial_number } = req.body;
+
+    try {
+        const existingDevice = await Device.findOne({ where: { serial_number } });
+        if (existingDevice) {
+            return res.status(400).json({ message: 'Device already exists' });
+        }
+
+        const device = await Device.create({ device_name, serial_number, user_name: null });
+        res.status(200).json({ message: 'Device registered successfully', device });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+});
+
+// GET /devices - список пристроїв
+app.get('/devices', async (req, res) => {
+    try {
+        const devices = await Device.findAll();
+        res.json(devices);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
 });
 
 // POST /take - взяття пристрою в користування
-app.post('/take', (req, res) => {
+app.post('/take', async (req, res) => {
     const { user_name, serial_number } = req.body;
-    const device = devices.find(device => device.serial_number === serial_number);
 
-    if (!device) {
-        return res.status(404).json({ message: 'Device not found' });
+    try {
+        const device = await Device.findOne({ where: { serial_number } });
+        if (!device) {
+            return res.status(404).json({ message: 'Device not found' });
+        }
+
+        if (device.user_name) {
+            return res.status(400).json({ message: 'Device already taken' });
+        }
+
+        device.user_name = user_name;
+        await device.save();
+        res.status(200).json({ message: 'Device taken successfully', device });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
     }
+});
 
-    if (device.user_name) {
-        return res.status(400).json({ message: 'Device already taken' });
+// POST /return - повернення пристрою
+app.post('/return', async (req, res) => {
+    const { serial_number } = req.body;
+
+    try {
+        const device = await Device.findOne({ where: { serial_number } });
+        if (!device) {
+            return res.status(404).json({ message: 'Device not found' });
+        }
+
+        device.user_name = null;
+        await device.save();
+        res.status(200).json({ message: 'Device returned successfully', device });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
     }
-
-    device.user_name = user_name;
-    res.status(200).json({ message: 'Device taken successfully' });
 });
 
 // GET /devices/:serial_number - інформація про пристрій
-app.get('/devices/:serial_number', (req, res) => {
+app.get('/devices/:serial_number', async (req, res) => {
     const { serial_number } = req.params;
-    const device = devices.find(device => device.serial_number === serial_number);
 
-    if (!device) {
-        return res.status(404).json({ message: 'Device not found' });
+    try {
+        const device = await Device.findOne({ where: { serial_number } });
+        if (!device) {
+            return res.status(404).json({ message: 'Device not found' });
+        }
+        res.json(device);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
     }
-
-    res.json(device);
 });
 
-const port = 8080;
+const port = process.env.PORT || 8080;
 app.listen(port, () => {
     console.log(`Server running on port ${port}`);
 });
